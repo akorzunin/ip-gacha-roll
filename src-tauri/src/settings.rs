@@ -7,6 +7,8 @@ pub(crate) const ROUTER_PASS: &str = "admin";
 // ROUTER ip
 pub(crate) const ROUTER_IP: &str = "192.168.1.1";
 
+pub(crate) const DRY_RUN: bool = true;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     pub router_ip: String,
