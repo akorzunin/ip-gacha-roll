@@ -7,6 +7,7 @@ export const Settings = () => {
   const [routerIp, setRouterIp] = useState("192.168.1.1");
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin");
+  const [showPassword, setShowPassword] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log(routerIp, username, password);
@@ -58,12 +59,21 @@ export const Settings = () => {
         </div>
         <div className="flex gap-4">
           <label htmlFor="password">Password: </label>
-          <input
-            type="text"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="flex">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="px-2"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
         </div>
         <button
           type="submit"
