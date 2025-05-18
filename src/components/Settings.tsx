@@ -20,10 +20,11 @@ export const Settings = () => {
       user = excluded.user,
       pass = excluded.pass
       `,
-      [1, routerIp, username, password]
+      [1, routerIp, username, password],
     );
     console.log(result);
   };
+  // @ts-ignore
   const data = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
@@ -53,8 +54,8 @@ export const Settings = () => {
           <input
             type="text"
             placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
         <div className="flex gap-4">

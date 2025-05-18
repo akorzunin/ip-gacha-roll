@@ -15,6 +15,7 @@ export interface LogEntry {
 }
 
 export async function writeLog(logs: LogEntry[]) {
+  // @ts-ignore
   const db = await Database.load("sqlite:data.db");
   console.log(logs);
   // TODO: parse logs and save to db

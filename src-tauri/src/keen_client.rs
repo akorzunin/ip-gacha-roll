@@ -1,5 +1,5 @@
-use crate::settings;
 use crate::auth::KeenClient;
+use crate::settings;
 
 #[tauri::command]
 pub fn keen_run(settings: Option<settings::Settings>, command: String) -> String {

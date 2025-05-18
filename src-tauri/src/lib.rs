@@ -1,8 +1,8 @@
+mod auth;
+mod check_nat;
 mod keen_client;
 mod migrations;
 mod settings;
-mod auth;
-mod check_nat;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        args: ['--manifest-path', './src-tauri/Cargo.toml']
+        entry: bash -c 'cd src-tauri && cargo fmt'
+      - id: cargo-check
+        args: ['--manifest-path', './src-tauri/Cargo.toml']
+      - id: clippy
+        args: ['--manifest-path', './src-tauri/Cargo.toml', '--', -D, warnings]
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [javascript, jsx, ts, tsx, css]
+        additional_dependencies:
+          - prettier@3.1.0

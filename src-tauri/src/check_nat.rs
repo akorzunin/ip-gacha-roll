@@ -34,7 +34,7 @@ pub async fn check_nat() -> Result<CheckNatRes, CheckNatErr> {
     };
     Ok(CheckNatRes {
         ip: ip.to_string(),
-        nat: nat,
+        nat,
     })
 }
 

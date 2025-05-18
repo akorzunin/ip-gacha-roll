@@ -1,4 +1,3 @@
-use md5;
 use reqwest::blocking::Client;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
