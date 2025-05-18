@@ -7,23 +7,27 @@ export const Settings = () => {
   const [routerIp, setRouterIp] = useState("192.168.1.1");
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin");
+  const [dryRun, setDryRun] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(routerIp, username, password);
+    console.log(routerIp, username, password, dryRun);
     const db = await Database.load("sqlite:data.db");
     const result = await db.execute(
-      `INSERT OR REPLACE INTO settings (id, router_ip, user, pass)
-      VALUES (?, ?, ?, ?)
+      `INSERT OR REPLACE INTO settings (id, router_ip, user, pass, dry_run)
+      VALUES (?, ?, ?, ?, ?)
       ON CONFLICT (id) DO UPDATE SET
       router_ip = excluded.router_ip,
       user = excluded.user,
-      pass = excluded.pass
+      pass = excluded.pass,
+      dry_run = excluded.dry_run
       `,
-      [1, routerIp, username, password],
+      [1, routerIp, username, password, dryRun],
     );
     console.log(result);
   };
+
   // @ts-ignore
   const data = useQuery({
     queryKey: ["settings"],
@@ -34,9 +38,11 @@ export const Settings = () => {
       setRouterIp(res.router_ip);
       setUsername(res.user);
       setPassword(res.pass);
+      setDryRun(res.dry_run);
       return res;
     },
   });
+
   return (
     <div className="bg-amber-400">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
@@ -75,6 +81,14 @@ export const Settings = () => {
               {showPassword ? "👁️" : "👁️‍🗨️"}
             </button>
           </div>
+        </div>
+        <div className="flex gap-4">
+          <label htmlFor="dryRun">Dry Run: </label>
+          <input
+            type="checkbox"
+            checked={dryRun}
+            onChange={(e) => setDryRun(e.target.checked)}
+          />
         </div>
         <button
           type="submit"

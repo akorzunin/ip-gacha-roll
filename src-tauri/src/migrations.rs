@@ -10,6 +10,7 @@ pub fn m() -> Vec<Migration> {
             router_ip TEXT NOT NULL,
             user TEXT NOT NULL,
             pass TEXT NOT NULL,
+            dry_run BOOLEAN NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS logs (

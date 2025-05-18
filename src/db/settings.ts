@@ -5,11 +5,14 @@ export interface Settings {
   router_ip: string;
   user: string;
   pass: string;
+  dry_run: boolean | string;
 }
 
 export async function getSettings(): Promise<Settings | undefined> {
   const db = await Database.load("sqlite:data.db");
   const result = (await db.select("SELECT * FROM settings")) as Settings[];
   if (result.length < 0) return;
-  return result[0];
+  const r = result[0];
+  r.dry_run = r.dry_run === "true";
+  return r;
 }

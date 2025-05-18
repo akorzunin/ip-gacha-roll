@@ -24,13 +24,10 @@ pub async fn check_nat() -> Result<CheckNatRes, CheckNatErr> {
             })
         }
     };
+    #[allow(clippy::manual_unwrap_or_default, clippy::manual_unwrap_or)]
     let nat = match ping_ip(ip, None).await {
         Ok(nat) => nat,
-        Err(e) => {
-            return Err(CheckNatErr {
-                detail: e.to_string(),
-            })
-        }
+        Err(_) => false,
     };
     Ok(CheckNatRes {
         ip: ip.to_string(),

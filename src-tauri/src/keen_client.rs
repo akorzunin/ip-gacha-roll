@@ -23,7 +23,7 @@ pub fn keen_run(settings: Option<settings::Settings>, command: String) -> String
                     Err(e) => e.to_string(),
                 },
                 "reroll" => {
-                    let req = match settings::DRY_RUN {
+                    let req = match settings.dry_run {
                         true => &serde_json::json!([
                             {
                                 "parse": "interface PPPoE0 up"

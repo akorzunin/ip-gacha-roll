@@ -42,7 +42,12 @@ export const CheckNetwork = () => {
       {data && (
         <div>
           <p>IP: {data.ip}</p>
-          <p>NAT: {data.nat ? "Yes" : "No"}</p>
+          <p>
+            NAT:{" "}
+            <span className={data.nat ? "text-green-500" : "text-red-500"}>
+              {data.nat ? "Yes" : "No"}
+            </span>
+          </p>
         </div>
       )}
     </div>
