@@ -34,7 +34,12 @@ export const Check = () => {
   });
   return (
     <div>
-      <button onClick={() => data.refetch()}>Check</button>
+      <button
+        className="bg-amber-500 text-gray-700 p-2 rounded-md"
+        onClick={() => data.refetch()}
+      >
+        Check interface
+      </button>
       {data.isLoading && <div>Loading...</div>}
       {data.isError && <div>Error: {data.error.detail}</div>}
       {data.data && <Interface data={data.data} />}

@@ -27,3 +27,5 @@ anyhow = "1.0.98"
 md5 = "0.7.0"
 sha2 = "0.10.8"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tokio = { version = "1.45.0", features = ["full"] }
+surge-ping = "0.8.2"

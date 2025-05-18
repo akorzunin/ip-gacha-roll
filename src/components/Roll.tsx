@@ -24,6 +24,7 @@ export const Roll = () => {
           await writeLog(logs);
           setTimesRolled(timesRolled + 1);
           queryClient.invalidateQueries({ queryKey: ["checkInterface"] });
+          queryClient.invalidateQueries({ queryKey: ["checkNetwork"] });
         }}
       >
         Roll

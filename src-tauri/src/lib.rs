@@ -2,6 +2,7 @@ mod keen_client;
 mod migrations;
 mod settings;
 mod auth;
+mod check_nat;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -12,7 +13,10 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![keen_client::keen_run])
+        .invoke_handler(tauri::generate_handler![
+            keen_client::keen_run,
+            check_nat::check_nat,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

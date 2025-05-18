@@ -2,6 +2,7 @@ import { Settings } from "./components/Settings";
 import { Check } from "./components/Check";
 import { Logs } from "./components/Logs";
 import { Roll } from "./components/Roll";
+import { CheckNetwork } from "./components/CheckNetwork";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <Settings />
       <Check />
       <Roll />
+      <CheckNetwork />
       <Logs />
     </main>
   );
