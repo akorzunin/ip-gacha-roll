@@ -6,14 +6,16 @@ import { CheckNetwork } from "./components/CheckNetwork";
 
 function App() {
   return (
-    <main className="bg-amber-200 text-4xl flex flex-col gap-6">
-      <h1>Roll IP</h1>
+    <main className="bg-amber-200 text-4xl flex flex-col gap-6 min-h-screen p-8">
+      <h1 className="font-bold">IP Gacha</h1>
 
-      <Settings />
-      <Check />
-      <Roll />
-      <CheckNetwork />
-      <Logs />
+      <div className="container mx-auto flex flex-col gap-8">
+        <Settings />
+        <Check />
+        <Roll />
+        <CheckNetwork />
+        <Logs />
+      </div>
     </main>
   );
 }

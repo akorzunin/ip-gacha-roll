@@ -33,16 +33,18 @@ export const Check = () => {
     refetchInterval: 10000,
   });
   return (
-    <div>
+    <div className="flex justify-between p-4 bg-amber-400 rounded-md">
+      <div className="w-full">
+        {data.isLoading && <div>Loading...</div>}
+        {data.isError && <div>Error: {data.error.detail}</div>}
+        {data.data && <Interface data={data.data} />}
+      </div>
       <button
-        className="bg-amber-500 text-gray-700 p-2 rounded-md"
+        className="bg-amber-500 text-gray-700 p-2 rounded-md h-fit hover:bg-amber-500/80"
         onClick={() => data.refetch()}
       >
-        Check interface
+        🔄
       </button>
-      {data.isLoading && <div>Loading...</div>}
-      {data.isError && <div>Error: {data.error.detail}</div>}
-      {data.data && <Interface data={data.data} />}
     </div>
   );
 };
