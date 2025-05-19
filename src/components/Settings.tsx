@@ -1,5 +1,5 @@
 import Database from "@tauri-apps/plugin-sql";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "react-query";
 import { getSettings } from "../db/settings";
 
@@ -9,6 +9,18 @@ export const Settings = () => {
   const [password, setPassword] = useState("admin");
   const [dryRun, setDryRun] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,6 +38,7 @@ export const Settings = () => {
       [1, routerIp, username, password, dryRun],
     );
     console.log(result);
+    setIsOpen(false);
   };
 
   // @ts-ignore
@@ -44,59 +57,99 @@ export const Settings = () => {
   });
 
   return (
-    <div className="bg-amber-400">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <div className="flex gap-4">
-          <label htmlFor="routerIp">Router IP: </label>
-          <input
-            type="text"
-            placeholder="Router IP"
-            value={routerIp}
-            onChange={(e) => setRouterIp(e.target.value)}
-          />
+    <div>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 right-4 bg-amber-400 hover:bg-amber-500 text-black font-bold p-4 rounded"
+      >
+        ⚙️ Settings
+      </button>
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ${
+          isOpen ? "block" : "hidden"
+        }`}
+      >
+        <div className="bg-amber-400 p-6 rounded-lg shadow-lg max-w-md w-full relative">
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+          >
+            ✕
+          </button>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="routerIp" className="font-medium">
+                Router IP:
+              </label>
+              <input
+                type="text"
+                id="routerIp"
+                placeholder="Router IP"
+                value={routerIp}
+                onChange={(e) => setRouterIp(e.target.value)}
+                className="p-2 rounded border"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="username" className="font-medium">
+                Username:
+              </label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="p-2 rounded border"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="password" className="font-medium">
+                Password:
+              </label>
+              <div className="flex max-w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="p-2 rounded-l border flex-1 min-w-0"
+                />
+                <button
+                  type="button"
+                  className="px-4 bg-white border border-l-0 rounded-r hover:bg-gray-50 shrink-0"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "👁️" : "👁️‍🗨️"}
+                </button>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <label htmlFor="dryRun" className="font-medium">
+                Dry Run:
+              </label>
+              <input
+                type="checkbox"
+                id="dryRun"
+                checked={dryRun}
+                onChange={(e) => setDryRun(e.target.checked)}
+                className="h-7 w-7"
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="submit"
+                className="bg-amber-500 hover:bg-amber-600 text-white rounded-md py-2 px-4"
+              >
+                Save
+              </button>
+            </div>
+          </form>
         </div>
-        <div className="flex gap-4">
-          <label htmlFor="username">Username: </label>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-4">
-          <label htmlFor="password">Password: </label>
-          <div className="flex">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="px-2"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? "👁️" : "👁️‍🗨️"}
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <label htmlFor="dryRun">Dry Run: </label>
-          <input
-            type="checkbox"
-            checked={dryRun}
-            onChange={(e) => setDryRun(e.target.checked)}
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-amber-500 rounded-md p-2 max-w-fit px-4"
-        >
-          Save
-        </button>
-      </form>
+      </div>
     </div>
   );
 };
