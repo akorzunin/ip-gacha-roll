@@ -5,7 +5,7 @@ export interface Settings {
   router_ip: string;
   user: string;
   pass: string;
-  dry_run: boolean | string;
+  dry_run: boolean;
 }
 
 export async function getSettings(): Promise<Settings | undefined> {
@@ -13,6 +13,7 @@ export async function getSettings(): Promise<Settings | undefined> {
   const result = (await db.select("SELECT * FROM settings")) as Settings[];
   if (result.length < 0) return;
   const r = result[0];
+  // @ts-ignore
   r.dry_run = r.dry_run === "true";
   return r;
 }

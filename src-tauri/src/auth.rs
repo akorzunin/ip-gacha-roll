@@ -3,40 +3,50 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 pub struct KeenClient {
-    client: Client,
     ip_addr: String,
+}
+
+#[derive(Serialize)]
+struct AuthPayload {
+    login: Box<str>,
+    password: Box<str>,
 }
 
 impl KeenClient {
     pub fn new(ip_addr: String) -> Result<Self, reqwest::Error> {
-        let client = Client::builder()
-            .cookie_store(true) // Ensure cookies are enabled
-            .user_agent("curl") // Match Python's UA
-            .build()?;
-
-        Ok(KeenClient { client, ip_addr })
+        Ok(KeenClient { ip_addr })
     }
 
-    pub fn get(&self, endpoint: &str) -> Result<reqwest::blocking::Response, reqwest::Error> {
+    pub fn get(
+        &self,
+        endpoint: &str,
+        client: &Client,
+    ) -> Result<reqwest::blocking::Response, reqwest::Error> {
         let url = format!("http://{}/{}", self.ip_addr, endpoint);
         println!("GET {}", url);
-        self.client.get(&url).send()
+        client.get(&url).send()
     }
 
     pub fn post<T: Serialize>(
         &self,
         endpoint: &str,
         data: &T,
+        client: &Client,
     ) -> Result<reqwest::blocking::Response, reqwest::Error> {
         let url = format!("http://{}/{}", self.ip_addr, endpoint);
         println!("POST {}", url);
         let body = serde_json::to_string(data).unwrap();
         println!("Request body: {}", body);
-        self.client.post(&url).json(data).send()
+        client.post(&url).json(data).send()
     }
 
-    pub fn auth(&self, login: &str, password: &str) -> Result<bool, reqwest::Error> {
-        let response = self.get("auth")?;
+    pub fn auth(
+        &self,
+        login: &str,
+        password: &str,
+        client: &Client,
+    ) -> Result<bool, reqwest::Error> {
+        let response = self.get("auth", client)?;
         println!("Initial auth response status: {}", response.status());
 
         if response.status() == 401 {
@@ -66,20 +76,13 @@ impl KeenClient {
             let sha_hex = format!("{:x}", sha.finalize());
             println!("SHA256 hash: {}", sha_hex);
 
-            #[derive(Serialize)]
-            struct AuthPayload<'a> {
-                login: &'a str,
-                password: &'a str,
-            }
-
             let auth_data = AuthPayload {
-                login,
-                password: &sha_hex,
+                login: login.into(),
+                password: sha_hex.into(),
             };
 
-            let post_response = self.post("auth", &auth_data)?;
+            let post_response = self.post("auth", &auth_data, client)?;
             println!("Auth POST response status: {}", post_response.status());
-            // save cookie
             Ok(post_response.status() == 200)
         } else {
             Ok(response.status() == 200)
@@ -93,14 +96,27 @@ mod tests {
     use crate::settings;
     use anyhow::ensure;
     use anyhow::Error;
+    use std::env;
+
+    fn get_rest_client() -> Client {
+        Client::builder()
+            .cookie_store(true)
+            .user_agent("curl")
+            .build()
+            .expect("Failed to create HTTP client for Router")
+    }
+
+    fn get_router_pass() -> String {
+        env::var("ROUTER_PASS").expect("ROUTER_PASS environment variable not set")
+    }
 
     #[test]
     fn test_auth() -> Result<(), Error> {
         let client = KeenClient::new(settings::ROUTER_IP.to_string());
         let login = settings::ROUTER_USER;
-        let passw = settings::ROUTER_PASS;
+        let passw = get_router_pass();
 
-        let result = client?.auth(login, &passw).unwrap();
+        let result = client?.auth(login, &passw, &get_rest_client())?;
         ensure!(result == true);
         Ok(())
     }
@@ -109,11 +125,11 @@ mod tests {
     fn test_get() -> Result<(), Error> {
         let client = KeenClient::new(settings::ROUTER_IP.to_string())?;
         let login = settings::ROUTER_USER;
-        let passw = settings::ROUTER_PASS;
-
-        let result = client.auth(login, &passw)?;
+        let passw = get_router_pass();
+        let rest_client = &get_rest_client();
+        let result = client.auth(login, &passw, rest_client)?;
         ensure!(result == true);
-        let response = client.get("rci/show/interface/WifiMaster0")?;
+        let response = client.get("rci/show/interface/WifiMaster0", rest_client)?;
         let s = response.status();
         println!("Response status: {}", s);
         println!("Response text: {}", response.text()?);
@@ -125,9 +141,9 @@ mod tests {
     fn test_post() -> Result<(), Error> {
         let client = KeenClient::new(settings::ROUTER_IP.to_string())?;
         let login = settings::ROUTER_USER;
-        let passw = settings::ROUTER_PASS;
-
-        let result = client.auth(login, &passw)?;
+        let passw = get_router_pass();
+        let rest_client = &get_rest_client();
+        let result = client.auth(login, &passw, rest_client)?;
         ensure!(result == true);
         let response = client.post(
             "rci/",
@@ -139,6 +155,7 @@ mod tests {
                     "parse": "interface PPPoE0 up"
                 }
             ]),
+            rest_client,
         )?;
         let s = response.status();
         println!("Response status: {}", s);

@@ -1,4 +1,4 @@
-use std::{error::Error, net::Ipv4Addr, time::Duration};
+use std::{net::Ipv4Addr, time::Duration};
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -27,7 +27,11 @@ pub async fn check_nat() -> Result<CheckNatRes, CheckNatErr> {
     #[allow(clippy::manual_unwrap_or_default, clippy::manual_unwrap_or)]
     let nat = match ping_ip(ip, None).await {
         Ok(nat) => nat,
-        Err(_) => false,
+        Err(e) => {
+            return Err(CheckNatErr {
+                detail: e.to_string(),
+            })
+        }
     };
     Ok(CheckNatRes {
         ip: ip.to_string(),
@@ -40,7 +44,7 @@ struct IpRes {
     ip: String,
 }
 
-pub async fn get_ip() -> Result<Ipv4Addr, Box<dyn Error>> {
+pub async fn get_ip() -> Result<Ipv4Addr, anyhow::Error> {
     let client = Client::new();
     let res = client
         .get("https://api.ipify.org?format=json")
@@ -59,14 +63,11 @@ async fn test_get_ip() {
     assert_eq!(ip.is_loopback(), false);
 }
 
-pub async fn ping_ip(ip: Ipv4Addr, timeout: Option<Duration>) -> Result<bool, Box<dyn Error>> {
+pub async fn ping_ip(ip: Ipv4Addr, timeout: Option<Duration>) -> Result<bool, anyhow::Error> {
     let timeout = timeout.unwrap_or(Duration::from_secs(10));
     let ping_future = surge_ping::ping(ip.to_string().parse()?, &[0; 32]);
     match tokio::time::timeout(timeout, ping_future).await {
-        Ok(result) => {
-            result?;
-            Ok(true)
-        }
+        Ok(_) => Ok(true),
         Err(_) => Ok(false),
     }
 }
