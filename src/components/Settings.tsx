@@ -1,6 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import { useState, useEffect } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { getSettings } from "../db/settings";
 
 export const Settings = () => {
@@ -10,6 +10,7 @@ export const Settings = () => {
   const [dryRun, setDryRun] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -22,7 +23,7 @@ export const Settings = () => {
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log(routerIp, username, password, dryRun);
     const db = await Database.load("sqlite:data.db");
@@ -39,9 +40,9 @@ export const Settings = () => {
     );
     console.log(result);
     setIsOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["settings"] });
   };
 
-  // @ts-ignore
   const data = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
@@ -61,16 +62,16 @@ export const Settings = () => {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 bg-amber-400 hover:bg-amber-500 text-black font-bold p-4 rounded"
+        className="fixed top-4 right-4 rounded bg-amber-400 p-4 font-bold text-black hover:bg-amber-500"
       >
         ⚙️ Settings
       </button>
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ${
+        className={`bg-opacity-50 fixed inset-0 flex items-center justify-center bg-black ${
           isOpen ? "block" : "hidden"
         }`}
       >
-        <div className="bg-amber-400 p-6 rounded-lg shadow-lg max-w-md w-full relative">
+        <div className="relative w-full max-w-md rounded-lg bg-amber-400 p-6 shadow-lg">
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -89,7 +90,7 @@ export const Settings = () => {
                 placeholder="Router IP"
                 value={routerIp}
                 onChange={(e) => setRouterIp(e.target.value)}
-                className="p-2 rounded border"
+                className="rounded border p-2"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -102,7 +103,7 @@ export const Settings = () => {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="p-2 rounded border"
+                className="rounded border p-2"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -116,11 +117,11 @@ export const Settings = () => {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="p-2 rounded-l border flex-1 min-w-0"
+                  className="min-w-0 flex-1 rounded-l border p-2"
                 />
                 <button
                   type="button"
-                  className="px-4 bg-white border border-l-0 rounded-r hover:bg-gray-50 shrink-0"
+                  className="shrink-0 rounded-r border border-l-0 bg-white px-4 hover:bg-gray-50"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? "👁️" : "👁️‍🗨️"}
@@ -139,10 +140,10 @@ export const Settings = () => {
                 className="h-7 w-7"
               />
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="mt-4 flex justify-end gap-2">
               <button
                 type="submit"
-                className="bg-amber-500 hover:bg-amber-600 text-white rounded-md py-2 px-4"
+                className="rounded-md bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
               >
                 Save
               </button>

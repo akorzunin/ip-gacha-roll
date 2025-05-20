@@ -32,10 +32,10 @@ export const Roll = () => {
   };
 
   return (
-    <div className="flex gap-4 rounded-lg bg-white/5 backdrop-blur-sm">
+    <div className="flex max-h-14 gap-4">
       <button
-        className={`animate-wiggle rounded-lg bg-amber-500 px-6 text-2xl font-medium shadow-lg transition-transform duration-200 hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-amber-500/25 active:bg-amber-700 ${
-          isRolling ? "animate-spin" : ""
+        className={`rounded-lg bg-amber-500 px-6 text-2xl font-medium shadow-lg transition-transform duration-200 hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-amber-500/25 active:bg-amber-700 ${
+          isRolling ? "animate-spin" : "animate-wiggle"
         }`}
         onClick={handleRoll}
         disabled={isRolling}

@@ -2,6 +2,7 @@
 
 @theme {
   --animate-wiggle: wiggle 3s ease-in-out infinite;
+  --animate-spin: spin 1s linear infinite;
 
   @keyframes wiggle {
     0%,
@@ -11,6 +12,15 @@
 
     50% {
       transform: rotate(3deg);
+    }
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 }

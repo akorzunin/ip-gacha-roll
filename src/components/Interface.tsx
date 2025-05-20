@@ -12,7 +12,7 @@ function parseUpTime(uptime: number): string {
   return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
 
-export const Interface: React.FC<{ data: CheckData }> = ({ data }) => {
+export const Interface: React.FC = ({ data }) => {
   const [optimisticUptime, setOptimisticUptime] = useState(data.uptime);
 
   useEffect(() => {
@@ -24,22 +24,19 @@ export const Interface: React.FC<{ data: CheckData }> = ({ data }) => {
   }, [data.uptime]);
 
   return (
-    <div className="bg-amber-400 flex flex-col gap-2">
+    <div className="flex flex-col gap-2 bg-amber-400">
       <p>Interface: {data.id}</p>
       <p>
         Status:{" "}
         <span
-          className={`${
+          className={`font-semibold ${
             data.state === "up" ? "text-green-500" : "text-red-500"
           }`}
         >
           {data.state}
         </span>
       </p>
-      <p>
-        IP Address: <span className="text-blue-500">{data.address}</span>
-      </p>
-      <p>uptime: {parseUpTime(optimisticUptime)}</p>
+      <p>Uptime: {parseUpTime(optimisticUptime)}</p>
     </div>
   );
 };

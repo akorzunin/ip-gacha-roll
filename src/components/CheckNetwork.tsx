@@ -26,30 +26,33 @@ export const CheckNetwork = () => {
       }
       return res as CheckNatResponse;
     },
+    refetchInterval: 10000,
   });
 
   return (
-    <div>
+    <div className="flex items-center gap-4 px-4">
+      <div>
+        {isLoading && <div>Loading...</div>}
+        {isError && <div>Error: {error.detail}</div>}
+        {data && (
+          <div>
+            <p>IP: {data.ip}</p>
+            <p>
+              NAT:{" "}
+              <span className={data.nat ? "text-green-500" : "text-red-500"}>
+                {data.nat ? "OK" : "Not OK"}
+              </span>
+              {isFetching && <span className="text-amber-500"> ...</span>}
+            </p>
+          </div>
+        )}
+      </div>
       <button
-        className="bg-amber-500 text-cyan-700 p-2 rounded-md"
+        className="h-14 w-14 rounded-md bg-amber-500"
         onClick={() => refetch()}
       >
-        Check Network
+        🔃
       </button>
-      {isLoading && <div>Loading...</div>}
-      {isFetching && <div>Fetching...</div>}
-      {isError && <div>Error: {error.detail}</div>}
-      {data && (
-        <div>
-          <p>IP: {data.ip}</p>
-          <p>
-            NAT:{" "}
-            <span className={data.nat ? "text-green-500" : "text-red-500"}>
-              {data.nat ? "Yes" : "No"}
-            </span>
-          </p>
-        </div>
-      )}
     </div>
   );
 };

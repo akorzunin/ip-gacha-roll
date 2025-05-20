@@ -15,6 +15,11 @@ interface CheckError {
 }
 
 export const Check = () => {
+  const settingsQuery = useQuery({
+    queryKey: ["settings"],
+    queryFn: getSettings,
+  });
+
   const data = useQuery<CheckData, CheckError>({
     queryKey: ["checkInterface"],
     queryFn: async () => {
@@ -32,15 +37,39 @@ export const Check = () => {
     },
     refetchInterval: 10000,
   });
+
   return (
-    <div className="flex justify-between p-4 bg-amber-400 rounded-md">
+    <div className="flex justify-between rounded-md bg-amber-400 p-4">
       <div className="w-full">
         {data.isLoading && <div>Loading...</div>}
         {data.isError && <div>Error: {data.error.detail}</div>}
         {data.data && <Interface data={data.data} />}
+        {settingsQuery.data && (
+          <div
+            className={`mt-3 flex items-center gap-2 ${
+              !settingsQuery.data.dry_run ? "hidden" : ""
+            }`}
+          >
+            <div
+              className={`h-2 w-2 rounded-full ${
+                settingsQuery.data.dry_run ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm font-medium">
+              Dry Run:
+              <span
+                className={`ml-1 ${
+                  settingsQuery.data.dry_run ? "text-green-700" : "text-red-700"
+                }`}
+              >
+                {settingsQuery.data.dry_run ? "Active" : "Inactive"}
+              </span>
+            </span>
+          </div>
+        )}
       </div>
       <button
-        className="bg-amber-500 text-gray-700 p-2 rounded-md h-fit hover:bg-amber-500/80"
+        className="h-fit rounded-md bg-amber-500 p-2 text-gray-700 hover:bg-amber-500/80"
         onClick={() => data.refetch()}
       >
         🔄
