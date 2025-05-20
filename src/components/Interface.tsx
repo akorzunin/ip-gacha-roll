@@ -12,7 +12,7 @@ function parseUpTime(uptime: number): string {
   return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
 
-export const Interface: React.FC = ({ data }) => {
+export const Interface: React.FC<{ data: CheckData }> = ({ data }) => {
   const [optimisticUptime, setOptimisticUptime] = useState(data.uptime);
 
   useEffect(() => {

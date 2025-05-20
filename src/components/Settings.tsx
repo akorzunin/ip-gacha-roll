@@ -43,7 +43,7 @@ export const Settings = () => {
     queryClient.invalidateQueries({ queryKey: ["settings"] });
   };
 
-  const data = useQuery({
+  const {} = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
       const res = await getSettings();
