@@ -13,7 +13,9 @@ export async function getSettings(): Promise<Settings | undefined> {
   const result = (await db.select("SELECT * FROM settings")) as Settings[];
   if (result.length < 0) return;
   const r = result[0];
-  // @ts-ignore
-  r.dry_run = r.dry_run === "true";
+  if (r && r?.dry_run) {
+    // @ts-ignore
+    r.dry_run = r?.dry_run === "true";
+  }
   return r;
 }

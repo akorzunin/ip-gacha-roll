@@ -29,7 +29,7 @@ export const Check = () => {
         command: "get_interface",
       })) as string;
       const data = JSON.parse(res) as CheckData | CheckError;
-      console.log(data);
+      // TODO: add write log here
       if ("detail" in data) {
         throw new Error(data.detail);
       }

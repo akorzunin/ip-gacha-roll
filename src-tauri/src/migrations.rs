@@ -16,6 +16,8 @@ pub fn m() -> Vec<Migration> {
         CREATE TABLE IF NOT EXISTS logs (
             id INTEGER PRIMARY KEY,
             message TEXT NOT NULL,
+            level TEXT NOT NULL DEFAULT 'info',
+            status TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         ",

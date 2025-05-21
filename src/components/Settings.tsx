@@ -25,7 +25,7 @@ export const Settings = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(routerIp, username, password, dryRun);
+    console.log(routerIp, username, dryRun);
     const db = await Database.load("sqlite:data.db");
     const result = await db.execute(
       `INSERT OR REPLACE INTO settings (id, router_ip, user, pass, dry_run)
@@ -47,12 +47,11 @@ export const Settings = () => {
     queryKey: ["settings"],
     queryFn: async () => {
       const res = await getSettings();
-      console.log(res);
       if (!res) return;
       setRouterIp(res.router_ip);
       setUsername(res.user);
       setPassword(res.pass);
-      setDryRun(res.dry_run);
+      setDryRun(res?.dry_run ?? false);
       return res;
     },
   });
@@ -62,7 +61,7 @@ export const Settings = () => {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 rounded bg-amber-400 p-4 font-bold text-black hover:bg-amber-500"
+        className="rounded-md bg-amber-400 p-4 font-bold text-black hover:bg-amber-500"
       >
         ⚙️ Settings
       </button>

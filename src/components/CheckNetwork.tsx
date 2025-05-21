@@ -51,7 +51,7 @@ export const CheckNetwork = () => {
         className="h-14 w-14 rounded-md bg-amber-500"
         onClick={() => refetch()}
       >
-        🔃
+        🔄
       </button>
     </div>
   );
