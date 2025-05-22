@@ -29,7 +29,11 @@ export async function writeLog(log: LogEntry, client: QueryClient) {
   client.invalidateQueries({ queryKey: ["logs"] });
 }
 
-export async function getLogs(minLevel: LogLevel = "debug") {
+export async function getLogs(
+  minLevel: LogLevel = "debug",
+  limit: number = 50,
+  offset: number = 0,
+) {
   const db = await Database.load("sqlite:data.db");
   const logs = (await db.select(
     `
@@ -46,9 +50,9 @@ export async function getLogs(minLevel: LogLevel = "debug") {
       WHEN 'error' THEN 3
     END
     ORDER BY l.created_at DESC
-    LIMIT 100
+    LIMIT ? OFFSET ?
   `,
-    [minLevel],
+    [minLevel, limit, offset],
   )) as unknown as LogEntry[];
   return logs;
 }

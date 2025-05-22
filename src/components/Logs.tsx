@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { getLogs, LogEntry, LogLevel, LogStatus } from "../db/logs";
-import { useQuery } from "react-query";
+import { useInfiniteQuery } from "react-query";
 
 function getLevelColor(level: LogLevel) {
   switch (level) {
@@ -33,15 +33,21 @@ export const Logs = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<LogLevel>("debug");
   const logsRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const data = useQuery({
-    queryKey: ["logs", selectedLevel],
-    queryFn: async () => {
-      const logs = await getLogs(selectedLevel);
-      return logs;
-    },
-    refetchInterval: 1000,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["logs", selectedLevel],
+      queryFn: async ({ pageParam = 0 }) => {
+        const logs = await getLogs(selectedLevel, 50, pageParam * 50);
+        return logs;
+      },
+      getNextPageParam: (lastPage, allPages) => {
+        return lastPage.length === 50 ? allPages.length : undefined;
+      },
+      refetchInterval: 1000,
+    });
 
   useEffect(() => {
     if (isExpanded) {
@@ -56,7 +62,37 @@ export const Logs = () => {
     }
   }, [isExpanded]);
 
-  const lastLog = data.data?.[data.data.length - 1];
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "100px",
+        threshold: 0.5,
+      },
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isExpanded]);
+
+  const allLogs = data?.pages.flat() ?? [];
+  const lastLog = allLogs[0];
 
   return (
     <div className="z-100 px-4">
@@ -100,11 +136,16 @@ export const Logs = () => {
         ref={logsRef}
         className={`rounded-b-lg bg-black px-4 py-6 font-mono text-sm transition-discrete duration-300 ${isExpanded ? "h-[400px]" : "h-fit"}`}
       >
-        {isExpanded && Array.isArray(data.data) ? (
+        {isExpanded ? (
           <div className="h-full space-y-2 overflow-y-scroll">
-            {data.data.map((log) => (
+            {allLogs.map((log) => (
               <LogLine key={log.id} log={log} />
             ))}
+            <div ref={loadMoreRef} className="h-4">
+              {isFetchingNextPage && (
+                <div className="text-center text-gray-500">Loading more...</div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="rounded-lg bg-black px-4">
