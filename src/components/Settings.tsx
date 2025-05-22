@@ -2,6 +2,7 @@ import Database from "@tauri-apps/plugin-sql";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { getSettings } from "../db/settings";
+import { writeLog } from "../db/logs";
 
 export const Settings = () => {
   const [routerIp, setRouterIp] = useState("192.168.1.1");
@@ -25,7 +26,6 @@ export const Settings = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(routerIp, username, dryRun);
     const db = await Database.load("sqlite:data.db");
     const result = await db.execute(
       `INSERT OR REPLACE INTO settings (id, router_ip, user, pass, dry_run)
@@ -38,7 +38,14 @@ export const Settings = () => {
       `,
       [1, routerIp, username, password, dryRun],
     );
-    console.log(result);
+    console.info(result);
+    await writeLog(
+      {
+        message: `Settings updated`,
+        level: "debug",
+      },
+      queryClient,
+    );
     setIsOpen(false);
     queryClient.invalidateQueries({ queryKey: ["settings"] });
   };
@@ -57,7 +64,7 @@ export const Settings = () => {
   });
 
   return (
-    <div>
+    <div className="z-1000">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

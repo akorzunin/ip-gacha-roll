@@ -1,13 +1,15 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getSettings } from "../db/settings";
 import { Interface } from "./Interface";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
+import { writeLog } from "../db/logs";
 
 export interface CheckData {
   id: string;
   state: string;
   address: string;
   uptime: number;
+  ip: string;
 }
 
 interface CheckError {
@@ -20,26 +22,53 @@ export const Check = () => {
     queryFn: getSettings,
   });
 
+  const queryClient = useQueryClient();
+
   const data = useQuery<CheckData, CheckError>({
     queryKey: ["checkInterface"],
     queryFn: async () => {
       const settings = await getSettings();
+      const prevData = queryClient.getQueryData<CheckData>(["checkInterface"]);
       const res = (await invoke("keen_run", {
         settings: settings,
         command: "get_interface",
       })) as string;
       const data = JSON.parse(res) as CheckData | CheckError;
-      // TODO: add write log here
       if ("detail" in data) {
+        await writeLog(
+          {
+            message: `Error checking interface: ${data.detail}`,
+            level: "error",
+            status: "error",
+          },
+          queryClient,
+        );
         throw new Error(data.detail);
       }
+      if (data.ip !== prevData?.ip) {
+        await writeLog(
+          {
+            message: `Interface IP changed from ${prevData?.ip} to ${data.ip}`,
+            level: "info",
+            status: "success",
+          },
+          queryClient,
+        );
+      }
+      await writeLog(
+        {
+          message: `Checking interface: ${data.id} uptime: ${data.uptime}`,
+          level: "debug",
+        },
+        queryClient,
+      );
       return data;
     },
     refetchInterval: 10000,
   });
 
   return (
-    <div className="flex justify-between rounded-md bg-amber-400 p-4">
+    <div className="z-20 flex justify-between rounded-md bg-amber-400 p-4">
       <div className="w-full">
         {data.isLoading && <div>Loading...</div>}
         {data.isError && <div>Error: {data.error.detail}</div>}

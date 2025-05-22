@@ -34,7 +34,11 @@ export const Logs = () => {
 
   const data = useQuery({
     queryKey: ["logs"],
-    queryFn: async () => await getLogs(),
+    queryFn: async () => {
+      const logs = await getLogs();
+      return logs;
+    },
+    refetchInterval: 1000,
   });
 
   useEffect(() => {
@@ -53,17 +57,19 @@ export const Logs = () => {
   const lastLog = data.data?.[data.data.length - 1];
 
   return (
-    <div className="px-4">
-      <div className="flex items-center justify-between">
-        <button onClick={() => setIsExpanded(!isExpanded)} className="">
-          <h2 className="text-xl font-semibold">
-            <span>{isExpanded ? "⌄" : ">"}</span>Logs:
-          </h2>
+    <div className="z-100 px-4">
+      <div className="flex items-center justify-between text-xl font-semibold text-amber-50">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="rounded-t-md bg-black px-4"
+        >
+          <span>{isExpanded ? "⌄" : ">"}</span>Logs:
         </button>
+        <button className="rounded-t-md bg-black px-6">Filter</button>
       </div>
       <div
         ref={logsRef}
-        className={`rounded-lg bg-black px-4 py-6 font-mono text-sm transition-discrete duration-300 ${isExpanded ? "h-[400px]" : "h-0"}`}
+        className={`rounded-b-lg bg-black px-4 py-6 font-mono text-sm transition-discrete duration-300 ${isExpanded ? "h-[400px]" : "h-fit"}`}
       >
         {isExpanded && Array.isArray(data.data) ? (
           <div className="h-full space-y-2 overflow-y-scroll">
@@ -93,7 +99,7 @@ const LogLine = ({ log }: { log: LogEntry | undefined }) => {
         [{log?.level?.toUpperCase()}]
       </span>
       {log.message}
-      <span>{getStatusEmoji(log.status)}</span>
+      {log.status && <span>{getStatusEmoji(log.status)}</span>}
     </div>
   );
 };
