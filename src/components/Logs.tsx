@@ -30,12 +30,14 @@ function getStatusEmoji(status: LogStatus) {
 
 export const Logs = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<LogLevel>("debug");
   const logsRef = useRef<HTMLDivElement>(null);
 
   const data = useQuery({
-    queryKey: ["logs"],
+    queryKey: ["logs", selectedLevel],
     queryFn: async () => {
-      const logs = await getLogs();
+      const logs = await getLogs(selectedLevel);
       return logs;
     },
     refetchInterval: 1000,
@@ -65,7 +67,34 @@ export const Logs = () => {
         >
           <span>{isExpanded ? "⌄" : ">"}</span>Logs:
         </button>
-        <button className="rounded-t-md bg-black px-6">Filter</button>
+        <div className="relative">
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="rounded-t-md bg-black px-6"
+          >
+            Filter {selectedLevel !== "debug" && `(${selectedLevel})`}
+          </button>
+          {showFilter && (
+            <div className="absolute right-0 mt-1 w-32 rounded-md bg-black p-2 shadow-lg">
+              {["debug", "info", "warning", "error"].map((level) => (
+                <button
+                  key={level}
+                  onClick={() => {
+                    setSelectedLevel(level as LogLevel);
+                    setShowFilter(false);
+                  }}
+                  className={`block w-full px-4 py-2 text-left text-sm ${
+                    selectedLevel === level
+                      ? "text-amber-50"
+                      : getLevelColor(level as LogLevel)
+                  }`}
+                >
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div
         ref={logsRef}
