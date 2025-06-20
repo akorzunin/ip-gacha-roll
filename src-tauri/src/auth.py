@@ -1,8 +1,6 @@
-import os
 import requests
 import hashlib
 
-cookies_current = None
 session = requests.session()
 
 

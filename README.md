@@ -32,6 +32,7 @@ ping $(curl ifconfig.me) -W 10 -c 1
 if exit code is 0, then ip is ok, otherwise roll ip address again
 
 ## Screenshot
+
 ![Image](https://github.com/user-attachments/assets/0dbb1691-471f-4d64-ab14-d8cc3c8114c5)
 
 # Run dev
