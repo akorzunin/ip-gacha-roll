@@ -7,7 +7,7 @@ mod check_nat;
 mod keen_client;
 mod migrations;
 mod settings;
-mod shared;
+pub mod shared;
 
 struct AppState<'a> {
     keen_client: &'a reqwest::blocking::Client,

@@ -1,3 +1,10 @@
+- run dev
+
+```
+cd src-bot
+cargo watch -x 'run'
+```
+
 - build for pi
 
 ```

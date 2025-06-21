@@ -1,13 +1,9 @@
-use std::fmt::Error;
-
-use teloxide::{prelude::*, utils::command::BotCommands, RequestError};
+use teloxide::{RequestError, prelude::*, utils::command::BotCommands};
 
 use crate::nat::nat_command;
 
 extern crate log;
 extern crate pretty_env_logger;
-// #[path = "../../src-tauri/src/keen_client.rs"]
-// mod keen_client;
 mod nat;
 
 #[tokio::main]
