@@ -1,0 +1,14 @@
+[package]
+name = "src-bot"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+teloxide = { version = "0.15.0", features = ["macros"] }
+log = "0.4.27"
+pretty_env_logger = "0.5.0"
+tokio = { version = "1.45.1", features = ["full"] }
+dotenv = "0.15.0"
+
+[dev-dependencies]
+teloxide_tests = "0.3.0"
