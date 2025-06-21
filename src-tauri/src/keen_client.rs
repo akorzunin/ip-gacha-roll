@@ -1,44 +1,7 @@
-use crate::auth::KeenClient;
 use crate::settings;
+use crate::shared::keen_utils::{get_interface, reroll_interface, KeenClient};
 use crate::AppState;
 use std::sync::Mutex;
-
-fn get_interface(client: &KeenClient, rest_client: &reqwest::blocking::Client) -> String {
-    match client.get("rci/show/interface/PPPoE0", rest_client) {
-        Ok(res) => res
-            .text()
-            .unwrap_or_else(|_| "Failed to get response text".to_string()),
-        Err(e) => e.to_string(),
-    }
-}
-
-fn reroll_interface(
-    client: &KeenClient,
-    rest_client: &reqwest::blocking::Client,
-    dry_run: bool,
-) -> String {
-    let req = match dry_run {
-        true => &serde_json::json!([
-            {
-                "parse": "interface PPPoE0 up"
-            },
-        ]),
-        false => &serde_json::json!([
-            {
-                "parse": "interface PPPoE0 down"
-            },
-            {
-                "parse": "interface PPPoE0 up"
-            },
-        ]),
-    };
-    match client.post("rci/", req, rest_client) {
-        Ok(res) => res
-            .text()
-            .unwrap_or_else(|_| "Failed to get response text".to_string()),
-        Err(e) => e.to_string(),
-    }
-}
 
 #[tauri::command]
 pub fn keen_run(

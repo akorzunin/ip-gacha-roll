@@ -1,10 +1,11 @@
 use teloxide::{RequestError, prelude::*, utils::command::BotCommands};
 
-use crate::nat::nat_command;
+use crate::{nat::nat_command, roll::roll_command};
 
 extern crate log;
 extern crate pretty_env_logger;
 mod nat;
+mod roll;
 
 #[tokio::main]
 async fn main() {
@@ -59,13 +60,10 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
                 Err(e) => bot_err(bot, msg, e).await,
             }
         }
-        Command::Roll => {
-            // dry_run = true;
-            match bot.send_message(msg.chat.id, "Rolling new IP...").await {
-                Ok(_) => Ok(()),
-                Err(e) => bot_err(bot, msg, e).await,
-            }
-        }
+        Command::Roll => match roll_command(bot.clone(), msg.clone()).await {
+            Ok(_) => Ok(()),
+            Err(e) => bot_err(bot, msg, e).await,
+        },
         Command::Nat => match nat_command(bot.clone(), msg.clone()).await {
             Ok(_) => Ok(()),
             Err(e) => bot_err(bot, msg, e).await,

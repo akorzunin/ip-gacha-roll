@@ -2,7 +2,6 @@ use std::sync::Mutex;
 
 use tauri::Manager;
 
-mod auth;
 mod check_nat;
 mod keen_client;
 mod migrations;
