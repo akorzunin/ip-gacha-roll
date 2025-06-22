@@ -1,0 +1,12 @@
+services:
+  roll-tg-bot:
+    container_name: roll-tg-bot
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: src-bot/Dockerfile
+      target: final
+    env_file:
+      - src-bot/.env
+    ports:
+      - ${PORT:-8000}:8000
