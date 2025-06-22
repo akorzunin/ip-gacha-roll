@@ -1,6 +1,5 @@
+use ip_gacha_roll_shared::net_utils;
 use teloxide::prelude::*;
-
-use ip_gacha_roll_lib::shared::net_utils;
 
 pub async fn nat_command(bot: Bot, msg: Message) -> ResponseResult<()> {
     let m = bot.send_message(msg.chat.id, "Checking NAT...").await?;

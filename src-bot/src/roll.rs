@@ -1,6 +1,6 @@
 use std::env;
 
-use ip_gacha_roll_lib::shared::keen_utils::{KeenClient, reroll_interface};
+use ip_gacha_roll_shared::keen_utils::{KeenClient, reroll_interface};
 use log::info;
 use teloxide::prelude::*;
 use tokio::{task::spawn_blocking, time::Duration, time::sleep};

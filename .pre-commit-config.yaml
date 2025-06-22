@@ -26,13 +26,23 @@ repos:
         name: bot fmt
         args: ["--manifest-path", "./src-bot/Cargo.toml"]
         entry: bash -c 'cd src-bot && cargo fmt'
+      - id: fmt
+        name: shared fmt
+        args: ["--manifest-path", "./shared/Cargo.toml"]
+        entry: bash -c 'cd shared && cargo fmt'
       - id: clippy
         args: ["--manifest-path", "./src-tauri/Cargo.toml", "--", -D, warnings]
       - id: clippy
         name: bot clippy
         args: ["--manifest-path", "./src-bot/Cargo.toml", "--", -D, warnings]
+      - id: clippy
+        name: shared clippy
+        args: ["--manifest-path", "./shared/Cargo.toml", "--", -D, warnings]
       - id: cargo-check
         args: ["--manifest-path", "./src-tauri/Cargo.toml"]
       - id: cargo-check
         name: bot check
         args: ["--manifest-path", "./src-bot/Cargo.toml"]
+      - id: cargo-check
+        name: shared check
+        args: ["--manifest-path", "./shared/Cargo.toml"]

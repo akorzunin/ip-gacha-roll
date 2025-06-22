@@ -14,7 +14,7 @@ dotenv = "0.15.0"
 reqwest = "0.12.20"
 surge-ping = "0.8.2"
 anyhow = "1.0.98"
-ip-gacha-roll = { path = "../src-tauri" }
+ip-gacha-roll-shared = { path = "../shared" }
 
 [dev-dependencies]
 teloxide_tests = "0.3.0"
