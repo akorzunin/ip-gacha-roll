@@ -1,0 +1,14 @@
+services:
+  roll-tg-bot:
+    container_name: roll-tg-bot
+    image: ghcr.io/akorzunin/ip-gacha-roll-tg-bot:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: src-bot/Dockerfile
+      target: final
+    environment:
+      TELOXIDE_TOKEN: ${TELOXIDE_TOKEN}
+      RUST_LOG: info
+    ports:
+      - ${PORT:-8000}:8000

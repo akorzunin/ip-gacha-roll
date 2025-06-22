@@ -28,7 +28,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/akorzunin/ip-gacha-roll
+          images: ghcr.io/akorzunin/ip-gacha-roll-tg-bot
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha
@@ -48,3 +48,35 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+  deploy:
+    name: 🚀 Deploy
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get short SHA
+        id: vars
+        run: echo "sha_short=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: deploy.yaml
+          directory: src-bot/deploy
+          configuration: |
+            [defaults]
+            callbacks_enabled = ansible.posix.profile_tasks, ansible.posix.timer
+            stdout_callback = yaml
+            interpreter_python = /usr/bin/python
+            [ssh_connection]
+            retries=5
+          vault_password: ${{ secrets.ANSIBLE_PASS }}
+          inventory: ${{ vars.ANSIBLE_HOSTS }}
+          options: |
+            --inventory .hosts
+            --limit ${{ vars.SERVER_GROUP }}
+            --verbose
+            --extra-vars "
+            PORT=${{ vars.PORT }}
+            TELOXIDE_TOKEN=${{ vars.TELOXIDE_TOKEN }}
+            IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
+            "
