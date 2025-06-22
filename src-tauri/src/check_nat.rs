@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::shared::net_utils::{get_ip, ping_ip_tcp};
+use ip_gacha_roll_shared::net_utils::{get_ip, ping_ip_tcp};
 
 #[derive(Serialize, Deserialize)]
 pub struct CheckNatRes {

@@ -1,6 +1,6 @@
 use crate::settings;
-use crate::shared::keen_utils::{get_interface, reroll_interface, KeenClient};
 use crate::AppState;
+use ip_gacha_roll_shared::keen_utils::{get_interface, reroll_interface, KeenClient};
 use std::sync::Mutex;
 
 #[tauri::command]
