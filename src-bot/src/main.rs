@@ -1,4 +1,5 @@
 use teloxide::{RequestError, prelude::*, utils::command::BotCommands};
+use warp::Filter;
 
 use crate::{nat::nat_command, roll::roll_command};
 
@@ -15,7 +16,10 @@ async fn main() {
 
     let bot = Bot::from_env();
 
-    Command::repl(bot, answer).await;
+    let bot_task = Command::repl(bot, answer);
+    let health_task = health_check_server();
+
+    tokio::join!(bot_task, health_task);
 }
 
 #[derive(BotCommands, Clone)]
@@ -71,4 +75,16 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
     };
 
     Ok(())
+}
+
+async fn health_check_server() {
+    let port: u16 = std::env::var("HEALTH_CHECK_PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(8000);
+    let health_route =
+        warp::path!("health").map(|| warp::reply::with_status("OK", warp::http::StatusCode::OK));
+
+    log::info!("Starting health check server on port {}", port);
+    warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
 }
