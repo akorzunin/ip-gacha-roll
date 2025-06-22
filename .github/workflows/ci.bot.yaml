@@ -2,8 +2,6 @@ name: bot CI
 
 on:
   push:
-    branches:
-      - main
     tags:
       - bot-v*
     paths:
@@ -77,6 +75,6 @@ jobs:
             --verbose
             --extra-vars "
             PORT=${{ vars.PORT }}
-            TELOXIDE_TOKEN=${{ vars.TELOXIDE_TOKEN }}
+            TELOXIDE_TOKEN=${{ secrets.TELOXIDE_TOKEN }}
             IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
             "
