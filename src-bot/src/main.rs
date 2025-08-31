@@ -19,7 +19,11 @@ async fn main() {
     let bot_task = Command::repl(bot, answer);
     let health_task = health_check_server();
 
-    tokio::join!(bot_task, health_task);
+    tokio::select! {
+        _ = bot_task => {},
+        _ = health_task => {},
+    }
+    log::info!("Shutting down...");
 }
 
 #[derive(BotCommands, Clone)]
