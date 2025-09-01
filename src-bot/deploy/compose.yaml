@@ -10,5 +10,7 @@ services:
     environment:
       TELOXIDE_TOKEN: ${TELOXIDE_TOKEN}
       RUST_LOG: info
+      ROUTER_PASS: ${ROUTER_PASS}
+      AUTHORIZED_BOT_USERS: ${AUTHORIZED_BOT_USERS}
     ports:
       - ${PORT:-8000}:8000

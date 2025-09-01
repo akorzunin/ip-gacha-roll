@@ -36,5 +36,7 @@
         IMAGE_TAG: "{{ IMAGE_TAG }}"
         PORT: "{{ PORT }}"
         TELOXIDE_TOKEN: "{{ TELOXIDE_TOKEN }}"
+        ROUTER_PASS: "{{ ROUTER_PASS }}"
+        AUTHORIZED_BOT_USERS: "{{ AUTHORIZED_BOT_USERS }}"
       register: out
       changed_when: out.rc != 0

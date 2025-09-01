@@ -5,7 +5,7 @@ use log::info;
 use teloxide::prelude::*;
 use tokio::{task::spawn_blocking, time::Duration, time::sleep};
 
-fn do_roll() -> String {
+fn do_roll() -> Result<String, String> {
     let c = reqwest::blocking::Client::builder()
         .cookie_store(true)
         .user_agent("curl")
@@ -13,24 +13,44 @@ fn do_roll() -> String {
         .expect("Failed to create HTTP client for Router");
     let router_ip = option_env!("ROUTER_IP").unwrap_or("192.168.1.1");
     let router_user = option_env!("ROUTER_USER").unwrap_or("admin");
-    let router_pass = env::var("ROUTER_PASS").expect("ROUTER_PASS environment variable not set");
+    let router_pass = match env::var("ROUTER_PASS") {
+        Ok(pass) => pass,
+        Err(_) => {
+            return Err("ROUTER_PASS environment variable not set".into());
+        }
+    };
     let dry_run = env::var("DRY_RUN").expect("DRY_RUN environment variable not set") == "true";
+    if dry_run {
+        log::warn!("DRY_RUN is set, no changes will be made");
+    }
 
     let kc = KeenClient::new(router_ip.to_string()).expect("Failed to create HTTP client");
     match kc.auth(router_user, &router_pass, &c) {
         Ok(authenticated) => {
             if !authenticated {
-                return "Authentication failed".to_string();
+                return Ok("Authentication failed".to_string());
             }
-            reroll_interface(&kc, &c, dry_run)
+            Ok(reroll_interface(&kc, &c, dry_run))
         }
-        Err(e) => e.to_string(),
+        Err(e) => Err(e.to_string()),
     }
 }
 
 pub async fn roll_command(bot: Bot, msg: Message) -> ResponseResult<()> {
     let m = bot.send_message(msg.chat.id, "Rolling new IP...").await?;
-    let res = spawn_blocking(do_roll).await.unwrap();
+    let res = match spawn_blocking(do_roll).await {
+        Ok(res) => match res {
+            Ok(res) => res,
+            Err(e) => {
+                log::error!("Error: {}", e);
+                let _ = bot
+                    .edit_message_text(m.chat.id, m.id, format!("Error: {}", e))
+                    .await;
+                return Ok(());
+            }
+        },
+        Err(e) => e.to_string(),
+    };
     sleep(Duration::from_secs(100)).await;
     info!("res: {:?}", res);
     if res.is_empty() {

@@ -13,6 +13,12 @@ async fn main() {
     dotenv::dotenv().ok();
     pretty_env_logger::init();
     log::info!("Starting command bot...");
+    match std::env::var("ROUTER_PASS") {
+        Ok(_) => {}
+        Err(_) => {
+            log::warn!("Router password is not set, use ROUTER_PASS environment variable");
+        }
+    }
 
     let bot = Bot::from_env();
 
@@ -48,7 +54,41 @@ async fn bot_err(bot: Bot, msg: Message, e: RequestError) -> ResponseResult<()> 
     Ok(())
 }
 
+async fn auth_user(bot: Bot, msg: Message) -> Result<(), ()> {
+    let authorized_users = match std::env::var("AUTHORIZED_BOT_USERS") {
+        Ok(users) => users,
+        Err(_) => {
+            bot.send_message(
+                msg.chat.id,
+                "AUTHORIZED_BOT_USERS environment variable is not set.",
+            )
+            .await
+            .unwrap();
+            return Err(());
+        }
+    };
+    dbg!(&authorized_users);
+    let authorized_users_list = authorized_users.split(',').collect::<Vec<&str>>();
+    dbg!(&authorized_users_list);
+    match msg.from {
+        Some(from) => {
+            log::info!("Command from user_id: {:?}", from.id);
+            if !authorized_users_list.contains(&from.id.to_string().as_str()) {
+                bot.send_message(msg.chat.id, "You are not in authorized list to use this bot. Check AUTHORIZED_BOT_USERS environment variable.")
+                    .await.unwrap();
+                return Err(());
+            }
+            Ok(())
+        }
+        None => Err(()),
+    }
+}
+
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
+    let _: Result<(), ()> = match auth_user(bot.clone(), msg.clone()).await {
+        Ok(_) => Ok(()),
+        Err(_) => return Ok(()),
+    };
     let _ = match cmd {
         Command::Start => {
             match bot

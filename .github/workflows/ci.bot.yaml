@@ -77,4 +77,6 @@ jobs:
             PORT=${{ vars.PORT }}
             TELOXIDE_TOKEN=${{ secrets.TELOXIDE_TOKEN }}
             IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
+            ROUTER_PASS=${{ secrets.ROUTER_PASS }}
+            AUTHORIZED_BOT_USERS=${{ vars.AUTHORIZED_BOT_USERS }}
             "
