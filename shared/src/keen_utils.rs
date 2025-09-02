@@ -130,10 +130,14 @@ pub fn reroll_interface(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings;
-    use anyhow::Error;
     use anyhow::ensure;
     use std::env;
+
+    pub const ROUTER_IP: &str = "192.168.1.1";
+    pub const ROUTER_USER: &str = "admin";
+    fn get_router_pass() -> String {
+        env::var("ROUTER_PASS").expect("ROUTER_PASS environment variable not set")
+    }
 
     fn get_rest_client() -> Client {
         Client::builder()
@@ -143,30 +147,24 @@ mod tests {
             .expect("Failed to create HTTP client for Router")
     }
 
-    fn get_router_pass() -> String {
-        env::var("ROUTER_PASS").expect("ROUTER_PASS environment variable not set")
-    }
-
     #[test]
-    fn test_auth() -> Result<(), Error> {
-        let client = KeenClient::new(settings::ROUTER_IP.to_string());
-        let login = settings::ROUTER_USER;
-        let passw = get_router_pass();
-
-        let result = client?.auth(login, &passw, &get_rest_client())?;
+    fn test_auth() -> anyhow::Result<()> {
+        let client = KeenClient::new(ROUTER_IP.to_string())?;
+        let result = client.auth(ROUTER_USER, &get_router_pass(), &get_rest_client())?;
         ensure!(result == true);
         Ok(())
     }
 
+    fn get_client_w_auth() -> anyhow::Result<KeenClient> {
+        let client = KeenClient::new(ROUTER_IP.to_string())?;
+        client.auth(ROUTER_USER, &get_router_pass(), &get_rest_client())?;
+        return Ok(client);
+    }
+
     #[test]
-    fn test_get() -> Result<(), Error> {
-        let client = KeenClient::new(settings::ROUTER_IP.to_string())?;
-        let login = settings::ROUTER_USER;
-        let passw = get_router_pass();
-        let rest_client = &get_rest_client();
-        let result = client.auth(login, &passw, rest_client)?;
-        ensure!(result == true);
-        let response = client.get("rci/show/interface/WifiMaster0", rest_client)?;
+    fn test_get() -> anyhow::Result<()> {
+        let client = get_client_w_auth()?;
+        let response = client.get("rci/show/interface/WifiMaster0", &get_rest_client())?;
         let s = response.status();
         println!("Response status: {}", s);
         println!("Response text: {}", response.text()?);
@@ -175,13 +173,9 @@ mod tests {
     }
 
     #[test]
-    fn test_post() -> Result<(), Error> {
-        let client = KeenClient::new(settings::ROUTER_IP.to_string())?;
-        let login = settings::ROUTER_USER;
-        let passw = get_router_pass();
+    fn test_post() -> anyhow::Result<()> {
+        let client = get_client_w_auth()?;
         let rest_client = &get_rest_client();
-        let result = client.auth(login, &passw, rest_client)?;
-        ensure!(result == true);
         let response = client.post(
             "rci/",
             &serde_json::json!([
