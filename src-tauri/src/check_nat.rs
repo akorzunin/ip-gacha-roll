@@ -13,27 +13,21 @@ pub struct CheckNatErr {
     detail: String,
 }
 
-#[tauri::command(async)]
-pub async fn check_nat() -> Result<CheckNatRes, CheckNatErr> {
-    let ip = match get_ip().await {
-        Ok(ip) => ip,
-        Err(e) => {
-            return Err(CheckNatErr {
-                detail: e.to_string(),
-            })
-        }
-    };
-    #[allow(clippy::manual_unwrap_or_default, clippy::manual_unwrap_or)]
-    let nat = match ping_ip_tcp(ip, None).await {
-        Ok(nat) => nat,
-        Err(e) => {
-            return Err(CheckNatErr {
-                detail: e.to_string(),
-            })
-        }
-    };
+async fn _check_nat() -> anyhow::Result<CheckNatRes> {
+    let ip = get_ip().await?;
+    let nat = ping_ip_tcp(ip, None).await?;
     Ok(CheckNatRes {
         ip: ip.to_string(),
         nat,
     })
+}
+
+#[tauri::command(async)]
+pub async fn check_nat() -> Result<CheckNatRes, CheckNatErr> {
+    match _check_nat().await {
+        Ok(res) => Ok(res),
+        Err(e) => Err(CheckNatErr {
+            detail: e.to_string(),
+        }),
+    }
 }
