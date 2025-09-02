@@ -3,8 +3,6 @@ use warp::Filter;
 
 use crate::{nat::nat_command, roll::roll_command};
 
-extern crate log;
-extern crate pretty_env_logger;
 mod nat;
 mod roll;
 
