@@ -8,13 +8,14 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
 
-  - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
-    hooks:
-      - id: prettier
-        additional_dependencies:
-          - "prettier@^3.5.3"
-          - "prettier-plugin-tailwindcss@^0.6.11"
+# TODO: uncomment when prettier hooks got fixed
+  # - repo: https://github.com/rbubley/mirrors-prettier
+  #   rev: v3.5.3
+  #   hooks:
+  #     - id: prettier
+  #       additional_dependencies:
+  #         - "prettier@^3.5.3"
+  #         - "prettier-plugin-tailwindcss@^0.6.11"
 
   - repo: https://github.com/doublify/pre-commit-rust
     rev: v1.0
