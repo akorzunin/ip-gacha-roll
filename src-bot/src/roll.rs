@@ -36,7 +36,7 @@ fn do_roll() -> Result<String, String> {
     }
 }
 
-pub async fn roll_command(bot: Bot, msg: Message) -> ResponseResult<()> {
+pub async fn roll_command(bot: Bot, msg: Message) -> anyhow::Result<()> {
     let m = bot.send_message(msg.chat.id, "Rolling new IP...").await?;
     let res = match spawn_blocking(do_roll).await {
         Ok(res) => match res {

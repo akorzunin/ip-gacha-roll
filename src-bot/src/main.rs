@@ -1,4 +1,4 @@
-use teloxide::{RequestError, prelude::*, utils::command::BotCommands};
+use teloxide::{prelude::*, utils::command::BotCommands};
 use warp::Filter;
 
 use crate::{nat::nat_command, roll::roll_command};
@@ -46,77 +46,65 @@ enum Command {
     Nat,
 }
 
-async fn bot_err(bot: Bot, msg: Message, e: RequestError) -> ResponseResult<()> {
+async fn bot_err(bot: Bot, msg: Message, e: anyhow::Error) -> ResponseResult<()> {
     log::error!("Request error: {:?}", e);
     bot.send_message(msg.chat.id, e.to_string()).await?;
     Ok(())
 }
 
-async fn auth_user(bot: Bot, msg: Message) -> Result<(), ()> {
+async fn auth_user(msg: Message) -> anyhow::Result<()> {
     let authorized_users = match std::env::var("AUTHORIZED_BOT_USERS") {
         Ok(users) => users,
         Err(_) => {
-            bot.send_message(
-                msg.chat.id,
-                "AUTHORIZED_BOT_USERS environment variable is not set.",
-            )
-            .await
-            .unwrap();
-            return Err(());
+            return Err(anyhow::anyhow!(
+                "AUTHORIZED_BOT_USERS environment variable is not set."
+            ));
         }
     };
-    dbg!(&authorized_users);
     let authorized_users_list = authorized_users.split(',').collect::<Vec<&str>>();
-    dbg!(&authorized_users_list);
     match msg.from {
         Some(from) => {
-            log::info!("Command from user_id: {:?}", from.id);
+            log::info!("Command from: {:?}", from.id);
             if !authorized_users_list.contains(&from.id.to_string().as_str()) {
-                bot.send_message(msg.chat.id, "You are not in authorized list to use this bot. Check AUTHORIZED_BOT_USERS environment variable.")
-                    .await.unwrap();
-                return Err(());
+                return Err(anyhow::anyhow!(
+                    "You are not in authorized list to use this bot. Check AUTHORIZED_BOT_USERS environment variable."
+                ));
             }
             Ok(())
         }
-        None => Err(()),
+        None => Err(anyhow::anyhow!("Can't get user id from update")),
     }
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
-    let _: Result<(), ()> = match auth_user(bot.clone(), msg.clone()).await {
+    match _answer(bot.clone(), msg.clone(), cmd).await {
         Ok(_) => Ok(()),
-        Err(_) => return Ok(()),
-    };
-    let _ = match cmd {
-        Command::Start => {
-            match bot
-                .send_message(msg.chat.id, "Welcome to ip-gacha-roll bot.")
-                .await
-            {
-                Ok(_) => Ok(()),
-                Err(e) => bot_err(bot, msg, e).await,
-            }
-        }
-        Command::Help => {
-            match bot
-                .send_message(msg.chat.id, Command::descriptions().to_string())
-                .await
-            {
-                Ok(_) => Ok(()),
-                Err(e) => bot_err(bot, msg, e).await,
-            }
-        }
-        Command::Roll => match roll_command(bot.clone(), msg.clone()).await {
-            Ok(_) => Ok(()),
-            Err(e) => bot_err(bot, msg, e).await,
-        },
-        Command::Nat => match nat_command(bot.clone(), msg.clone()).await {
-            Ok(_) => Ok(()),
-            Err(e) => bot_err(bot, msg, e).await,
-        },
-    };
+        Err(e) => bot_err(bot, msg, e).await,
+    }
+}
 
-    Ok(())
+fn ok_msg<T, E>(res: Result<T, E>) -> Result<(), anyhow::Error>
+where
+    E: Into<anyhow::Error>,
+{
+    // discard bot message from return type and pass the error to the caller
+    res.map(|_| ()).map_err(Into::into)
+}
+
+async fn _answer(bot: Bot, msg: Message, cmd: Command) -> anyhow::Result<()> {
+    auth_user(msg.clone()).await?;
+    match cmd {
+        Command::Start => ok_msg(
+            bot.send_message(msg.chat.id, "Welcome to ip-gacha-roll bot.")
+                .await,
+        ),
+        Command::Help => ok_msg(
+            bot.send_message(msg.chat.id, Command::descriptions().to_string())
+                .await,
+        ),
+        Command::Roll => ok_msg(roll_command(bot.clone(), msg.clone()).await),
+        Command::Nat => ok_msg(nat_command(bot.clone(), msg.clone()).await),
+    }
 }
 
 async fn health_check_server() {
