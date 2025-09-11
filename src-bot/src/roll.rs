@@ -19,7 +19,10 @@ fn do_roll() -> Result<String, String> {
             return Err("ROUTER_PASS environment variable not set".into());
         }
     };
-    let dry_run = env::var("DRY_RUN").expect("DRY_RUN environment variable not set") == "true";
+    let dry_run = match env::var("DRY_RUN") {
+        Ok(dry_run) => dry_run == "true",
+        Err(_) => false,
+    };
     if dry_run {
         log::warn!("DRY_RUN is set, no changes will be made");
     }
