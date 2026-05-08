@@ -3,6 +3,7 @@ services:
     container_name: roll-tg-bot
     image: ghcr.io/akorzunin/ip-gacha-roll-tg-bot:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    network_mode: host
     build:
       context: .
       dockerfile: src-bot/Dockerfile
@@ -12,5 +13,7 @@ services:
       RUST_LOG: info
       ROUTER_PASS: ${ROUTER_PASS}
       AUTHORIZED_BOT_USERS: ${AUTHORIZED_BOT_USERS}
+      TELOXIDE_PROXY: ${HTTP_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1}
     ports:
       - ${PORT:-8000}:8000

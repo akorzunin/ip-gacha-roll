@@ -38,5 +38,6 @@
         TELOXIDE_TOKEN: "{{ TELOXIDE_TOKEN }}"
         ROUTER_PASS: "{{ ROUTER_PASS }}"
         AUTHORIZED_BOT_USERS: "{{ AUTHORIZED_BOT_USERS }}"
+        HTTP_PROXY: "{{ HTTP_PROXY }}"
       register: out
       changed_when: out.rc != 0
