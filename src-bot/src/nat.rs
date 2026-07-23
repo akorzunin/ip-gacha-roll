@@ -5,6 +5,10 @@ use teloxide::prelude::*;
 use tokio::{task::JoinHandle, time::sleep};
 
 const DEFAULT_NAT_CHECK_INTERVAL_SECS: u64 = 300;
+const DEFAULT_NAT_FIX_MAX_ATTEMPTS: u64 = 3;
+const DEFAULT_NAT_FIX_WAIT_SECS: u64 = 10;
+const DUCKDNS_UI_URL: &str = "http://192.168.1.58:3000";
+const DUCKDNS_DOMAIN: &str = "akorz.duckdns.org";
 static NAT_MONITORS: OnceLock<tokio::sync::Mutex<HashMap<ChatId, JoinHandle<()>>>> =
     OnceLock::new();
 
@@ -20,10 +24,14 @@ pub fn default_interval_secs() -> u64 {
 }
 
 fn interval_secs(value: Option<&str>) -> u64 {
+    positive_secs(value, DEFAULT_NAT_CHECK_INTERVAL_SECS)
+}
+
+fn positive_secs(value: Option<&str>, default: u64) -> u64 {
     value
         .and_then(|value| value.parse().ok())
         .filter(|&seconds| seconds > 0)
-        .unwrap_or(DEFAULT_NAT_CHECK_INTERVAL_SECS)
+        .unwrap_or(default)
 }
 
 pub async fn start_monitor(bot: Bot, chat_id: ChatId, interval_secs: u64) {
@@ -50,8 +58,15 @@ pub async fn stop_monitor(chat_id: ChatId) -> bool {
 
 async fn monitor_nat(bot: Bot, chat_id: ChatId, interval: Duration) {
     let mut previous = None;
+    let mut recovery_exhausted = false;
     loop {
-        let (current, state) = nat_status().await;
+        let (mut current, mut state) = nat_status().await;
+        if state == Some(false) && !recovery_exhausted {
+            (current, state) = recover_nat().await;
+            recovery_exhausted = state == Some(false);
+        } else if state != Some(false) {
+            recovery_exhausted = false;
+        }
         if previous != Some(state) {
             if let Err(error) = bot.send_message(chat_id, current).await {
                 log::warn!("Could not send NAT status: {error}");
@@ -60,6 +75,59 @@ async fn monitor_nat(bot: Bot, chat_id: ChatId, interval: Duration) {
         }
         sleep(interval).await;
     }
+}
+
+async fn recover_nat() -> (String, Option<bool>) {
+    let attempts = positive_secs(
+        env::var("NAT_FIX_MAX_ATTEMPTS").ok().as_deref(),
+        DEFAULT_NAT_FIX_MAX_ATTEMPTS,
+    );
+    let wait = Duration::from_secs(positive_secs(
+        env::var("NAT_FIX_WAIT_SECS").ok().as_deref(),
+        DEFAULT_NAT_FIX_WAIT_SECS,
+    ));
+
+    for attempt in 1..=attempts {
+        if let Err(error) = update_duckdns().await {
+            log::warn!("DuckDNS update attempt {attempt}/{attempts} failed: {error}");
+        }
+        sleep(wait).await;
+        let (message, state) = nat_status().await;
+        if state == Some(true) {
+            return (
+                format!("NAT recovered after DuckDNS update {attempt}/{attempts}: {message}"),
+                state,
+            );
+        }
+        if state.is_none() {
+            return (
+                format!("NAT check failed after DuckDNS update {attempt}/{attempts}: {message}"),
+                state,
+            );
+        }
+    }
+    (
+        format!("NAT remains unreachable after {attempts} DuckDNS update attempts."),
+        Some(false),
+    )
+}
+
+async fn update_duckdns() -> anyhow::Result<()> {
+    let url = env::var("DUCKDNS_UI_URL")
+        .ok()
+        .filter(|url| !url.is_empty())
+        .unwrap_or_else(|| DUCKDNS_UI_URL.into());
+    let response = tokio::time::timeout(
+        Duration::from_secs(10),
+        reqwest::Client::new()
+            .post(format!("{}/api/task", url.trim_end_matches('/')))
+            .header("Content-Type", "application/json")
+            .body(format!(r#"{{"domain":"{DUCKDNS_DOMAIN}","interval":"0"}}"#))
+            .send(),
+    )
+    .await??;
+    response.error_for_status()?;
+    Ok(())
 }
 
 async fn nat_status() -> (String, Option<bool>) {
@@ -85,6 +153,8 @@ fn interval_defaults_when_missing_or_invalid() {
     );
     assert_eq!(interval_secs(Some("0")), DEFAULT_NAT_CHECK_INTERVAL_SECS);
     assert_eq!(interval_secs(Some("60")), 60);
+    assert_eq!(positive_secs(Some("2"), 3), 2);
+    assert_eq!(positive_secs(Some("0"), 3), 3);
 }
 
 #[tokio::test]

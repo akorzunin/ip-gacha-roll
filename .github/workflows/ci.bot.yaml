@@ -80,5 +80,8 @@ jobs:
             ROUTER_PASS=${{ secrets.ROUTER_PASS }}
             AUTHORIZED_BOT_USERS=${{ vars.AUTHORIZED_BOT_USERS }}
             NAT_CHECK_INTERVAL_SECS=${{ vars.NAT_CHECK_INTERVAL_SECS }}
+            NAT_FIX_MAX_ATTEMPTS=${{ vars.NAT_FIX_MAX_ATTEMPTS }}
+            NAT_FIX_WAIT_SECS=${{ vars.NAT_FIX_WAIT_SECS }}
+            DUCKDNS_UI_URL=${{ vars.DUCKDNS_UI_URL }}
             HTTP_PROXY=${{ vars.HTTP_PROXY }}
             "

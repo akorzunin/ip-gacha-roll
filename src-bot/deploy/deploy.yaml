@@ -39,6 +39,9 @@
         ROUTER_PASS: "{{ ROUTER_PASS }}"
         AUTHORIZED_BOT_USERS: "{{ AUTHORIZED_BOT_USERS }}"
         NAT_CHECK_INTERVAL_SECS: "{{ NAT_CHECK_INTERVAL_SECS | default('') }}"
+        NAT_FIX_MAX_ATTEMPTS: "{{ NAT_FIX_MAX_ATTEMPTS | default('3') }}"
+        NAT_FIX_WAIT_SECS: "{{ NAT_FIX_WAIT_SECS | default('10') }}"
+        DUCKDNS_UI_URL: "{{ DUCKDNS_UI_URL | default('http://192.168.1.58:3000') }}"
         HTTP_PROXY: "{{ HTTP_PROXY }}"
       register: out
       changed_when: out.rc != 0
