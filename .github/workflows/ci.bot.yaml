@@ -79,5 +79,6 @@ jobs:
             IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
             ROUTER_PASS=${{ secrets.ROUTER_PASS }}
             AUTHORIZED_BOT_USERS=${{ vars.AUTHORIZED_BOT_USERS }}
+            NAT_CHECK_INTERVAL_SECS=${{ vars.NAT_CHECK_INTERVAL_SECS }}
             HTTP_PROXY=${{ vars.HTTP_PROXY }}
             "

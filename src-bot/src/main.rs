@@ -1,7 +1,10 @@
 use teloxide::{prelude::*, utils::command::BotCommands};
 use warp::Filter;
 
-use crate::{nat::nat_command, roll::roll_command};
+use crate::{
+    nat::{default_interval_secs, nat_command, start_monitor, stop_monitor},
+    roll::roll_command,
+};
 
 mod nat;
 mod roll;
@@ -44,6 +47,27 @@ enum Command {
     Roll,
     #[command(description = "check nat status.")]
     Nat,
+    #[command(
+        description = "start NAT monitoring; optional interval in seconds.",
+        parse_with = parse_nat_watch_interval
+    )]
+    NatWatch(Option<u64>),
+    #[command(description = "stop NAT monitoring.")]
+    NatStop,
+}
+
+fn parse_nat_watch_interval(
+    value: String,
+) -> Result<(Option<u64>,), teloxide::utils::command::ParseError> {
+    let value = value.trim();
+    if value.is_empty() {
+        return Ok((None,));
+    }
+    value.parse().map(|seconds| (Some(seconds),)).map_err(|_| {
+        teloxide::utils::command::ParseError::IncorrectFormat(
+            "interval must be a whole number of seconds".into(),
+        )
+    })
 }
 
 async fn bot_err(bot: Bot, msg: Message, e: anyhow::Error) -> ResponseResult<()> {
@@ -104,7 +128,43 @@ async fn _answer(bot: Bot, msg: Message, cmd: Command) -> anyhow::Result<()> {
         ),
         Command::Roll => ok_msg(roll_command(bot.clone(), msg.clone()).await),
         Command::Nat => ok_msg(nat_command(bot.clone(), msg.clone()).await),
+        Command::NatWatch(interval) => {
+            let interval = interval.unwrap_or_else(default_interval_secs);
+            anyhow::ensure!(interval > 0, "interval must be greater than zero");
+            ok_msg(
+                bot.send_message(
+                    msg.chat.id,
+                    format!("NAT monitoring started; checking every {interval} seconds."),
+                )
+                .await,
+            )?;
+            start_monitor(bot, msg.chat.id, interval).await;
+            Ok(())
+        }
+        Command::NatStop => ok_msg(
+            bot.send_message(
+                msg.chat.id,
+                if stop_monitor(msg.chat.id).await {
+                    "NAT monitoring stopped."
+                } else {
+                    "NAT monitoring is not running."
+                },
+            )
+            .await,
+        ),
     }
+}
+
+#[test]
+fn nat_watch_interval_is_optional() {
+    assert!(matches!(
+        Command::parse("/natwatch", ""),
+        Ok(Command::NatWatch(None))
+    ));
+    assert!(matches!(
+        Command::parse("/natwatch 60", ""),
+        Ok(Command::NatWatch(Some(60)))
+    ));
 }
 
 async fn health_check_server() {

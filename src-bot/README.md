@@ -11,6 +11,11 @@ run in docker ( from root dir )
 docker compose up --build
 ```
 
+- NAT monitoring
+
+`/natwatch` starts monitoring with `NAT_CHECK_INTERVAL_SECS` (300 seconds if unset).
+`/natwatch 60` uses a custom interval; `/natstop` stops it. Status is sent when it changes.
+
 - build for pi
 
 ```
