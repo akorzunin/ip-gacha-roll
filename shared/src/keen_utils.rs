@@ -99,11 +99,11 @@ pub fn get_interface(client: &KeenClient, rest_client: &reqwest::blocking::Clien
     }
 }
 
-pub fn reroll_interface(
+fn reroll_request(
     client: &KeenClient,
     rest_client: &reqwest::blocking::Client,
     dry_run: bool,
-) -> String {
+) -> Result<reqwest::blocking::Response, reqwest::Error> {
     let req = match dry_run {
         true => &serde_json::json!([
             {
@@ -119,12 +119,30 @@ pub fn reroll_interface(
             },
         ]),
     };
-    match client.post("rci/", req, rest_client) {
+    client.post("rci/", req, rest_client)
+}
+
+pub fn reroll_interface(
+    client: &KeenClient,
+    rest_client: &reqwest::blocking::Client,
+    dry_run: bool,
+) -> String {
+    match reroll_request(client, rest_client, dry_run) {
         Ok(res) => res
             .text()
             .unwrap_or_else(|_| "Failed to get response text".to_string()),
         Err(e) => e.to_string(),
     }
+}
+
+pub fn reroll_interface_status(
+    client: &KeenClient,
+    rest_client: &reqwest::blocking::Client,
+    dry_run: bool,
+) -> Result<(), reqwest::Error> {
+    reroll_request(client, rest_client, dry_run)
+        .and_then(|response| response.error_for_status())
+        .map(|_| ())
 }
 
 #[cfg(test)]
