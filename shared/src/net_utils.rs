@@ -30,7 +30,7 @@ pub async fn ping_ip_tcp(ip: Ipv4Addr, timeout: Option<Duration>) -> Result<bool
 pub async fn get_ip() -> Result<Ipv4Addr, anyhow::Error> {
     let client = Client::new();
     let res = client
-        .get("https://ifconfig.me")
+        .get("https://api4.ipify.org")
         .header(USER_AGENT, "curl")
         .send()
         .await?;
