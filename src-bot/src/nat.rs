@@ -1,5 +1,6 @@
 use std::{collections::HashMap, env, sync::OnceLock, time::Duration};
 
+use crate::roll::{RollResult, reroll};
 use ip_gacha_roll_shared::net_utils;
 use teloxide::prelude::*;
 use tokio::{task::JoinHandle, time::sleep};
@@ -88,26 +89,41 @@ async fn recover_nat() -> (String, Option<bool>) {
     ));
 
     for attempt in 1..=attempts {
-        if let Err(error) = update_duckdns().await {
-            log::warn!("DuckDNS update attempt {attempt}/{attempts} failed: {error}");
+        match reroll().await {
+            Ok(RollResult::DryRun) => {
+                return ("NAT recovery skipped: DRY_RUN is set.".into(), Some(false));
+            }
+            Ok(_) => {}
+            Err(error) => {
+                log::warn!("NAT recovery roll attempt {attempt}/{attempts} failed: {error}");
+                sleep(wait).await;
+                continue;
+            }
         }
-        sleep(wait).await;
+
         let (message, state) = nat_status().await;
         if state == Some(true) {
-            return (
-                format!("NAT recovered after DuckDNS update {attempt}/{attempts}: {message}"),
-                state,
-            );
+            return match update_duckdns().await {
+                Ok(()) => (
+                    format!("NAT recovered and DuckDNS updated {attempt}/{attempts}: {message}"),
+                    state,
+                ),
+                Err(error) => (
+                    format!("NAT recovered, but DuckDNS update failed: {error}; {message}"),
+                    state,
+                ),
+            };
         }
         if state.is_none() {
             return (
-                format!("NAT check failed after DuckDNS update {attempt}/{attempts}: {message}"),
+                format!("NAT check failed after roll attempt {attempt}/{attempts}: {message}"),
                 state,
             );
         }
+        sleep(wait).await;
     }
     (
-        format!("NAT remains unreachable after {attempts} DuckDNS update attempts."),
+        format!("NAT remains unreachable after {attempts} roll attempts."),
         Some(false),
     )
 }

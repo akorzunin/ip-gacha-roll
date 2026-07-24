@@ -14,6 +14,12 @@ const ROLL_READY_TIMEOUT: Duration = Duration::from_secs(100);
 const ROLL_CHECK_INTERVAL: Duration = Duration::from_secs(2);
 const TELEGRAM_RETRY_DELAY: Duration = Duration::from_secs(1);
 
+pub(crate) enum RollResult {
+    DryRun,
+    Reachable(Ipv4Addr),
+    TimedOut,
+}
+
 fn do_roll() -> Result<bool, String> {
     let c = reqwest::blocking::Client::builder()
         .cookie_store(true)
@@ -70,35 +76,37 @@ fn telegram_retry_delay(error: &RequestError) -> Option<Duration> {
     }
 }
 
-pub async fn roll_command(bot: Bot, msg: Message) -> anyhow::Result<()> {
-    let message = bot
-        .send_message(msg.chat.id, "🔄 Restarting PPPoE connection…")
-        .await?;
+pub(crate) async fn reroll() -> Result<RollResult, String> {
     let previous_ip = timeout(Duration::from_secs(5), net_utils::get_ip())
         .await
         .ok()
         .and_then(Result::ok);
-
-    let dry_run = match spawn_blocking(do_roll).await {
-        Ok(Ok(dry_run)) => dry_run,
-        Ok(Err(error)) => {
-            edit_status(&bot, &message, format!("❌ {error}")).await?;
-            return Ok(());
-        }
-        Err(error) => {
-            edit_status(&bot, &message, format!("❌ {error}")).await?;
-            return Ok(());
-        }
-    };
-    if dry_run {
-        edit_status(&bot, &message, "✅ Dry run: router was not restarted.").await?;
-        return Ok(());
+    match spawn_blocking(do_roll)
+        .await
+        .map_err(|error| error.to_string())??
+    {
+        true => Ok(RollResult::DryRun),
+        false => Ok(
+            match timeout(ROLL_READY_TIMEOUT, wait_for_reachable_ip(previous_ip)).await {
+                Ok(ip) => RollResult::Reachable(ip),
+                Err(_) => RollResult::TimedOut,
+            },
+        ),
     }
+}
 
-    edit_status(&bot, &message, "⏳ Waiting for a new reachable IP…").await?;
-    match timeout(ROLL_READY_TIMEOUT, wait_for_reachable_ip(previous_ip)).await {
-        Ok(ip) => edit_status(&bot, &message, format!("✅ New reachable IP: {ip}")).await?,
-        Err(_) => {
+pub async fn roll_command(bot: Bot, msg: Message) -> anyhow::Result<()> {
+    let message = bot
+        .send_message(msg.chat.id, "🔄 Restarting PPPoE connection…")
+        .await?;
+    match reroll().await {
+        Ok(RollResult::DryRun) => {
+            edit_status(&bot, &message, "✅ Dry run: router was not restarted.").await?
+        }
+        Ok(RollResult::Reachable(ip)) => {
+            edit_status(&bot, &message, format!("✅ New reachable IP: {ip}")).await?
+        }
+        Ok(RollResult::TimedOut) => {
             edit_status(
                 &bot,
                 &message,
@@ -106,6 +114,7 @@ pub async fn roll_command(bot: Bot, msg: Message) -> anyhow::Result<()> {
             )
             .await?
         }
+        Err(error) => edit_status(&bot, &message, format!("❌ {error}")).await?,
     }
     Ok(())
 }
